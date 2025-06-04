@@ -10,19 +10,32 @@ export default async function handler(req, res) {
       app_secret: FEISHU_APP_SECRET
     })
   });
-  const { tenant_access_token } = await authRes.json();
 
-  const sheetToken = "shtcnWbt3nAHXlDf"; // 可根据实际替换
-  const viewId = "vewcnmCJyT";           // 可根据实际替换
+  const tokenJson = await authRes.json();
+  console.log("Token response:", tokenJson);
+
+  if (tokenJson.code !== 0) {
+    return res.status(500).json({ error: "获取 token 失败", detail: tokenJson });
+  }
+
+  const { tenant_access_token } = tokenJson;
+
+  const sheetToken = "shtcnWbt3nAHXlDf"; // 替换成你的
+  const viewId = "vewcnmCJyT";           // 替换成你的
   const url = `https://open.feishu.cn/open-apis/bitable/v1/apps/${sheetToken}/tables/${viewId}/records`;
 
   const dataRes = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${tenant_access_token}`
+      "Authorization": `Bearer ${tenant_access_token}`
     }
   });
 
   const json = await dataRes.json();
+
+  if (json.code !== 0) {
+    return res.status(500).json({ error: "获取表格数据失败", detail: json });
+  }
+
   const records = json.data.items.map(item => ({
     状态: item.fields["状态"],
     车牌: item.fields["车牌"],
