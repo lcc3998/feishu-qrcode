@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>空闲车辆二维码展示</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2em; }
+    #plate { font-size: 2em; margin-bottom: 1em; }
+    #qrcode { margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <div id="plate">加载中...</div>
+  <div id="qrcode"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script>
+    async function fetchVehicle() {
+      try {
+        const res = await fetch("/api/vehicle");
+        const data = await res.json();
+        const idle = data.find(v => v.状态 === "空闲");
+        if (idle) {
+          document.getElementById("plate").textContent = idle.车牌;
+          document.getElementById("qrcode").innerHTML = "";
+          QRCode.toCanvas(idle.二维码, { width: 200 }, function (err, canvas) {
+            if (!err) document.getElementById("qrcode").appendChild(canvas);
+          });
+        } else {
+          document.getElementById("plate").textContent = "暂无空闲车辆";
+          document.getElementById("qrcode").innerHTML = "";
+        }
+      } catch (e) {
+        document.getElementById("plate").textContent = "加载失败";
+      }
+    }
+
+    fetchVehicle();
+    setInterval(fetchVehicle, 10000);
+  </script>
+</body>
+</html>
